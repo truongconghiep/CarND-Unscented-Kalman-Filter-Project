@@ -86,6 +86,19 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   {
     last_timestamp = meas_package.timestamp_;
     is_initialized_ = true;
+
+      //create example vector for predicted state mean
+  x_ << 5.93637,
+        1.49035,
+        2.20528,
+        0.536853,
+        0.353577;
+
+  P_ << 0.0054342,  -0.002405,  0.0034157, -0.0034819, -0.00299378,
+        -0.002405,    0.01084,   0.001492,  0.0098018,  0.00791091,
+        0.0034157,   0.001492,  0.0058012, 0.00077863, 0.000792973,
+        -0.0034819,  0.0098018, 0.00077863,   0.011923,   0.0112491,
+        -0.0029937,  0.0079109, 0.00079297,   0.011249,   0.0126972;
   }
   else
   {
@@ -189,21 +202,16 @@ void UKF::UpdateRadar( MeasurementPackage meas_package,
   */
 
   //set vector for weights
-  VectorXd weights = VectorXd(2*n_aug_+1);
-  double weight_0 = lambda_ / (lambda_ + n_aug_);
-  weights(0) = weight_0;
-  for (int i=1; i < 2 * n_aug_ + 1; i++) //2n+1 weights
-  {  
-    double weight = 0.5/(n_aug_+lambda_);
-    weights(i) = weight;
-  }
+  VectorXd weights = VectorXd(2 * n_aug_ + 1);
+  GenerateWeight(&weights);
 
   //create matrix for cross correlation Tc
   MatrixXd Tc = MatrixXd(n_x_, n_z_);
 
   //calculate cross correlation matrix
   Tc.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {  //2n+1 simga points
+  for (int i = 0; i < 2 * n_aug_ + 1; i++)  //2n+1 simga points
+  {  
 
     //residual
     VectorXd z_diff = Zsig->col(i) - *z_pred;
@@ -332,27 +340,21 @@ void UKF::PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, Mat
   //create vector for weights
   VectorXd weights = VectorXd(2*n_aug_+1);
   
+  
   //create vector for predicted state
   VectorXd x = VectorXd(n_x_);
 
   //create covariance matrix for prediction
   MatrixXd P = MatrixXd(n_x_, n_x_);
 
-
   // set weights
-  double weight_0 = lambda_/(lambda_+n_aug_);
-  weights(0) = weight_0;
-  for (int i=1; i<2*n_aug_+1; i++) 
-  {  //2n+1 weights
-    double weight = 0.5/(n_aug_+lambda_);
-    weights(i) = weight;
-  }
+  GenerateWeight(&weights);
 
   //predicted state mean
   x.fill(0.0);
   for (int i = 0; i < 2 * n_aug_ + 1; i++) 
   {  //iterate over sigma points
-    x = x+ weights(i) * Xsig_in->col(i);
+    x = x + weights(i) * Xsig_in->col(i);
   }
 
   //predicted state covariance matrix
@@ -375,15 +377,9 @@ void UKF::PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, Mat
 
 void UKF::PredictRadarMeasurement(MatrixXd* Xsig_in, VectorXd* z_out, MatrixXd* S_out, MatrixXd *Zsig_pts) 
 {
-  //set vector for weights
+  // Generates weights
   VectorXd weights = VectorXd(2 * n_aug_ + 1);
-  double weight_0 = lambda_ / (lambda_ + n_aug_);
-  weights(0) = weight_0;
-  for (int i=1; i < (2 * n_aug_ + 1); i++) 
-  {  
-    double weight = 0.5 / (n_aug_ + lambda_);
-    weights(i) = weight;
-  }
+  GenerateWeight(&weights);
 
   //create matrix for sigma points in measurement space
   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
@@ -440,4 +436,15 @@ void UKF::PredictRadarMeasurement(MatrixXd* Xsig_in, VectorXd* z_out, MatrixXd* 
   *z_out = z_pred;
   *S_out = S;
   *Zsig_pts = Zsig;
+}
+
+void UKF::GenerateWeight(VectorXd *weights)
+{
+  double weight_0 = lambda_ / (lambda_ + n_aug_);
+  (*weights)(0) = weight_0;
+  for (int i=1; i < (2 * n_aug_ + 1); i++) 
+  {  
+    double weight = 0.5 / (n_aug_ + lambda_);
+    (*weights)(i) = weight;
+  }
 }

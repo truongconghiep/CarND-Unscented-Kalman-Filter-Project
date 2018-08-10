@@ -143,6 +143,8 @@ private:
   void PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, MatrixXd *P_pred);
 
   void PredictRadarMeasurement(MatrixXd* Xsig_in, VectorXd* z_out, MatrixXd* S_out, MatrixXd *Zsig_pts);
+
+  void GenerateWeight(VectorXd *weights);
 };
 
 #endif /* UKF_H */
