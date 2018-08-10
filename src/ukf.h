@@ -79,7 +79,6 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
-
   /**
    * Constructor
    */
@@ -123,8 +122,6 @@ public:
 
 private:
 
-
-
   /**
    * Generate augmented sigma points
    * @param  Xsig_out generated sigma points 
@@ -135,15 +132,30 @@ private:
    * predict the generated sigma points
    * @param Xsig_out predicted sigma points
    */
-  void SigmaPointPrediction(MatrixXd* Xsig_in, MatrixXd* Xsig_out, float delta_t);
+  void SigmaPointPrediction(MatrixXd* Xsig_in, 
+                            MatrixXd* Xsig_out, 
+                            float delta_t);
 
   /**
    * predict mean and covariance
    */
-  void PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, MatrixXd *P_pred);
+  void PredictMeanAndCovariance(MatrixXd* Xsig_in, 
+                                VectorXd *x_pred_mean, 
+                                MatrixXd *P_pred);
 
-  void PredictRadarMeasurement(MatrixXd* Xsig_in, VectorXd* z_out, MatrixXd* S_out, MatrixXd *Zsig_pts);
+  /**
+   * predict radar measurement
+   * 
+  */
+  void PredictRadarMeasurement( MatrixXd* Xsig_in, 
+                                VectorXd* z_out, 
+                                MatrixXd* S_out, 
+                                MatrixXd *Zsig_pts);
 
+  /**
+   * set weights
+   * @param weights
+   */
   void GenerateWeight(VectorXd *weights);
 };
 
