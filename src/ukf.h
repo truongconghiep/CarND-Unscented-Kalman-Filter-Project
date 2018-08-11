@@ -27,7 +27,18 @@ public:
 
   ///* state covariance matrix
   MatrixXd P_;
-
+  ///* Augmented sigma points matrix
+  MatrixXd AugSigPts;
+  ///* predicted sigma points matrix
+  MatrixXd PredSigPts;
+  ///* Radar predicted measurement mean
+  VectorXd z_pred_meas_mean_ra;
+  ///* Lidar predicted measurement mean
+  VectorXd z_pred_meas_mean_li;
+  ///* radar predicted measurement sigma points
+  MatrixXd Zsig_pts_radar;
+  ///* Lidar predicted measurement sigma points
+  MatrixXd Zsig_pts_lidar;
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
 
@@ -73,11 +84,25 @@ public:
   ///* Augmented state dimension
   int n_aug_;
 
+  ///* Radar measurement state dimension
   int n_z_;
+
+  ///* Lidar measurement state dimension
+  int L_n_z_;
 
   ///* Sigma point spreading parameter
   double lambda_;
 
+  ///* Lidar measurement noise covariance matrix
+  MatrixXd R_Li_;
+
+  ///* Radar measurement noise covariance matrix
+  MatrixXd R_Ra_;
+
+  ///* Radar covariance matrix
+  MatrixXd S_Ra_;
+  ///* Lidar covariance matrix
+  MatrixXd S_Li_;
 
   /**
    * Constructor
@@ -95,18 +120,18 @@ public:
    */
   void ProcessMeasurement(MeasurementPackage meas_package);
 
-  /**
-   * Prediction Predicts sigma points, the state, and the state covariance
-   * matrix
-   * @param delta_t Time between k and k+1 in s
-   */
-  void Prediction(double delta_t);
+private:
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateLidar(MeasurementPackage meas_package);
+  void UpdateLidar( MeasurementPackage meas_package,
+                    MatrixXd *Xsig_pred,               
+                    VectorXd *x_pred,                 
+                    MatrixXd *P_pred,                  
+                    MatrixXd *Zsig,                    
+                    VectorXd *z_pred) ;
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
@@ -117,12 +142,7 @@ public:
                     VectorXd *x_pred,                  // predicted mean
                     MatrixXd *P_pred,                  // predicted covariance
                     MatrixXd *Zsig,                    // predicted measurement sigma points
-                    VectorXd *z_pred,                  // predicted measurement mean
-                    MatrixXd *S);                      // predicted measurement covariance
-
-private:
-
-
+                    VectorXd *z_pred);                  // predicted measurement mean
 
   /**
    * Generate augmented sigma points
@@ -134,14 +154,54 @@ private:
    * predict the generated sigma points
    * @param Xsig_out predicted sigma points
    */
-  void SigmaPointPrediction(MatrixXd* Xsig_in, MatrixXd* Xsig_out, float delta_t);
+  void SigmaPointPrediction(MatrixXd* Xsig_in, 
+                            MatrixXd* Xsig_out, 
+                            float delta_t);
 
   /**
    * predict mean and covariance
    */
-  void PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, MatrixXd *P_pred);
+  void PredictMeanAndCovariance(MatrixXd* Xsig_in, 
+                                VectorXd *x_pred_mean, 
+                                MatrixXd *P_pred);
 
-  void PredictRadarMeasurement(MatrixXd* Xsig_in, VectorXd* z_out, MatrixXd* S_out, MatrixXd *Zsig_pts);
+  /**
+   * predict radar measurement
+   * 
+  */
+  void PredictRadarMeasurement( MatrixXd* Xsig_in, 
+                                VectorXd* z_out, 
+                                MatrixXd* S_out, 
+                                MatrixXd *Zsig_pts);
+
+  /**
+   * predict lidar measurement
+   * 
+  */
+  void PredictLidarMeasurement(MatrixXd *Xsig_in,
+                                    VectorXd *z_out,
+                                    MatrixXd *S_out,
+                                    MatrixXd *Zsig_pts);
+
+  /**
+   * set weights
+   * @param weights
+   */
+  void GenerateWeight(VectorXd *weights);
+
+  /**
+   * Calculate mean value
+   * @param 
+   */
+  void CalculateMean(VectorXd *Mean_out, 
+                     VectorXd *weights, 
+                     MatrixXd *Zsig);
+
+  /**
+   * Normalize an angle 
+   */
+  void NormalizeAngle(VectorXd *vector, 
+                      int index);
 };
 
 #endif /* UKF_H */
