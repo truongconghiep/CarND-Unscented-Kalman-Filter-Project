@@ -418,11 +418,7 @@ void UKF::PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, Mat
   GenerateWeight(&weights);
 
   //predicted state mean
-  x.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) 
-  {  //iterate over sigma points
-    x = x + weights(i) * Xsig_in->col(i);
-  }
+  CalculateMean( &x, &weights, Xsig_in);
 
   //predicted state covariance matrix
   P.fill(0.0);
@@ -467,11 +463,7 @@ void UKF::PredictLidarMeasurement(MatrixXd* Xsig_in,
 
   //mean predicted measurement
   VectorXd z_pred = VectorXd(L_n_z_);
-  z_pred.fill(0.0);
-  for (int i=0; i < (2 * n_aug_ + 1); i++) 
-  {
-      z_pred = z_pred + weights(i) * Zsig.col(i);
-  }
+  CalculateMean( &z_pred, &weights, &Zsig);
 
   //innovation covariance matrix S
   MatrixXd S = MatrixXd(L_n_z_, L_n_z_);
@@ -533,11 +525,7 @@ void UKF::PredictRadarMeasurement(MatrixXd* Xsig_in,
 
   //mean predicted measurement
   VectorXd z_pred = VectorXd(n_z_);
-  z_pred.fill(0.0);
-  for (int i=0; i < (2 * n_aug_ + 1); i++) 
-  {
-      z_pred = z_pred + weights(i) * Zsig.col(i);
-  }
+  CalculateMean( &z_pred, &weights, &Zsig);
 
   //innovation covariance matrix S
   MatrixXd S = MatrixXd(n_z_, n_z_);
@@ -574,5 +562,16 @@ void UKF::GenerateWeight(VectorXd *weights)
   {  
     double weight = 0.5 / (n_aug_ + lambda_);
     (*weights)(i) = weight;
+  }
+}
+
+void UKF::CalculateMean( VectorXd *Mean_out, 
+                         VectorXd *weights, 
+                         MatrixXd *Zsig)
+{
+  Mean_out->fill(0.0);
+  for (int i=0; i < (2 * n_aug_ + 1); i++) 
+  {
+      *Mean_out = *Mean_out + (*weights)(i) * Zsig->col(i);
   }
 }

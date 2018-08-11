@@ -82,6 +82,12 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  ///* Lidar measurement noise covariance matrix
+  // MatrixXd R_Li_;
+
+  // ///* Radar measurement noise covariance matrix
+  // MatrixXd R_Ra_;
+
   /**
    * Constructor
    */
@@ -156,6 +162,12 @@ private:
    * predict radar measurement
    * 
   */
+  // void PredictRadarMeasurement( MatrixXd* Xsig_in, 
+  //                               VectorXd* z_out, 
+  //                               MatrixXd* S_out, 
+  //                               MatrixXd *Zsig_pts,
+  //                               MatrixXd *R);
+
   void PredictRadarMeasurement( MatrixXd* Xsig_in, 
                                 VectorXd* z_out, 
                                 MatrixXd* S_out, 
@@ -170,11 +182,19 @@ private:
                                     MatrixXd *S_out,
                                     MatrixXd *Zsig_pts);
 
-      /**
+  /**
    * set weights
    * @param weights
    */
-      void GenerateWeight(VectorXd *weights);
+  void GenerateWeight(VectorXd *weights);
+
+  /**
+   * Calculate mean value
+   * @param 
+   */
+  void CalculateMean(VectorXd *Mean_out, 
+                     VectorXd *weights, 
+                     MatrixXd *Zsig);
 };
 
 #endif /* UKF_H */
