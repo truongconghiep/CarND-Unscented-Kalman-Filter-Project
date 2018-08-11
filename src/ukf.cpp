@@ -26,6 +26,8 @@ UKF::UKF()
   //* Sigma point spreading parameter
   lambda_ = 3 - n_aug_;
 
+
+
   // initial state vector
   x_ = VectorXd(n_x_);
 
@@ -90,7 +92,18 @@ UKF::UKF()
   x_pred_mean = VectorXd(n_x_);
   ///* predicted covariance matrix
   P_pred = MatrixXd(n_x_, n_x_);
-  
+  ///* Augmented sigma points matrix
+  AugSigPts = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  ///* predicted sigma points matrix
+  PredSigPts = MatrixXd(n_x_, 2 * n_aug_ + 1);
+  ///* Radar predicted measurement mean
+  z_pred_meas_mean_ra = VectorXd(n_z_);
+  ///* Lidar predicted measurement mean
+  z_pred_meas_mean_li = VectorXd(L_n_z_);
+  ///* radar predicted measurement sigma points
+  Zsig_pts_radar = MatrixXd(n_z_, 2 * n_aug_ + 1);
+  ///* Lidar predicted measurement sigma points
+  Zsig_pts_lidar = MatrixXd(L_n_z_, 2 * n_aug_ + 1);
 }
 
 UKF::~UKF() {}
@@ -102,7 +115,9 @@ UKF::~UKF() {}
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) 
 {
   float delta_t;
-
+  /*******************************************************************************/
+  /*                               INITILIZATION                                 */
+  /*******************************************************************************/
   if(!is_initialized_)
   {
     last_timestamp = meas_package.timestamp_;
@@ -128,24 +143,16 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
   delta_t = (meas_package.timestamp_ - last_timestamp) / 1000000.0;
   last_timestamp = meas_package.timestamp_;
 
-  MatrixXd AugSigPts = MatrixXd(7, 15);
-  //create matrix with predicted sigma points as columns
-  MatrixXd PredSigPts = MatrixXd(5, 15);
-
-  VectorXd z_pred_meas_mean_ra = VectorXd(3);
-
-  VectorXd z_pred_meas_mean_li = VectorXd(2);
-
-  MatrixXd Zsig_pts_radar = MatrixXd(3, 15);
-
-  MatrixXd Zsig_pts_lidar = MatrixXd(2, 15);
-
+  /*******************************************************************************/
+  /*                                 PREDICTION                                  */
+  /*******************************************************************************/
   AugmentedSigmaPoints(&AugSigPts);
-
   SigmaPointPrediction(&AugSigPts, &PredSigPts, delta_t);
-
   PredictMeanAndCovariance(&PredSigPts, &x_pred_mean, &P_pred);
 
+  /*******************************************************************************/
+  /*                                   UPDATE                                    */
+  /*******************************************************************************/
   if (meas_package.sensor_type_ == MeasurementPackage::RADAR)
   {
     PredictRadarMeasurement(&PredSigPts, 

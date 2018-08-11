@@ -27,7 +27,18 @@ public:
 
   ///* state covariance matrix
   MatrixXd P_;
-
+  ///* Augmented sigma points matrix
+  MatrixXd AugSigPts;
+  ///* predicted sigma points matrix
+  MatrixXd PredSigPts;
+  ///* Radar predicted measurement mean
+  VectorXd z_pred_meas_mean_ra;
+  ///* Lidar predicted measurement mean
+  VectorXd z_pred_meas_mean_li;
+  ///* radar predicted measurement sigma points
+  MatrixXd Zsig_pts_radar;
+  ///* Lidar predicted measurement sigma points
+  MatrixXd Zsig_pts_lidar;
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
 
