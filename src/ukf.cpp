@@ -242,14 +242,12 @@ void UKF::UpdateRadar( MeasurementPackage meas_package,
     //residual
     VectorXd z_diff = Zsig->col(i) - *z_pred;
     //angle normalization
-    while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-    while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+    NormalizeAngle(&z_diff, 1); 
 
     // state difference
     VectorXd x_diff = Xsig_pred->col(i) - *x_pred;
     //angle normalization
-    while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
-    while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
+    NormalizeAngle(&x_diff, 3); 
 
     Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
   }
@@ -261,8 +259,7 @@ void UKF::UpdateRadar( MeasurementPackage meas_package,
   VectorXd z_diff = meas_package.raw_measurements_ - *z_pred;
 
   //angle normalization
-  while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-  while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+  NormalizeAngle(&z_diff, 1); 
 
   //update state mean and covariance matrix
   x_ = *x_pred + K * z_diff;
@@ -377,8 +374,7 @@ void UKF::PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, Mat
     // state difference
     VectorXd x_diff = Xsig_in->col(i) - x;
     //angle normalization
-    while (x_diff(3)> M_PI) x_diff(3)-=2.*M_PI;
-    while (x_diff(3)<-M_PI) x_diff(3)+=2.*M_PI;
+    NormalizeAngle(&x_diff, 3); 
 
     P = P + weights_(i) * x_diff * x_diff.transpose() ;
   }
@@ -470,8 +466,7 @@ void UKF::PredictRadarMeasurement(MatrixXd* Xsig_in,
     VectorXd z_diff = Zsig.col(i) - z_pred;
 
     //angle normalization
-    while (z_diff(1)> M_PI) z_diff(1)-=2.*M_PI;
-    while (z_diff(1)<-M_PI) z_diff(1)+=2.*M_PI;
+    NormalizeAngle(&z_diff, 1); 
 
     S = S + weights_(i) * z_diff * z_diff.transpose();
   }
@@ -505,4 +500,10 @@ void UKF::CalculateMean( VectorXd *Mean_out,
   {
       *Mean_out = *Mean_out + (*weights)(i) * Zsig->col(i);
   }
+}
+
+void UKF::NormalizeAngle(VectorXd *vector, int index) 
+{
+  while ((*vector)(index)> M_PI) (*vector)(index)-=2.*M_PI;
+  while ((*vector)(index)<-M_PI) (*vector)(index)+=2.*M_PI;
 }

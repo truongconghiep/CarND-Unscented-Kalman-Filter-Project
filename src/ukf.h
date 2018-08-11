@@ -178,6 +178,8 @@ private:
   void CalculateMean(VectorXd *Mean_out, 
                      VectorXd *weights, 
                      MatrixXd *Zsig);
+
+  void NormalizeAngle(VectorXd *vector, int index);
 };
 
 #endif /* UKF_H */
