@@ -81,6 +81,16 @@ UKF::UKF()
   R_Ra_ << std_radr_ * std_radr_, 0,                          0,
            0,                     std_radphi_ * std_radphi_,  0,
            0,                     0,                          std_radrd_ * std_radrd_;
+
+  ///* Radar covariance matrix         
+  S_Ra_ = MatrixXd(n_z_, n_z_);
+  ///* Lidar covariance matrix
+  S_Li_ = MatrixXd(L_n_z_, L_n_z_);
+  ///* predicted mean
+  x_pred_mean = VectorXd(n_x_);
+  ///* predicted covariance matrix
+  P_pred = MatrixXd(n_x_, n_x_);
+  
 }
 
 UKF::~UKF() {}
@@ -122,9 +132,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
   //create matrix with predicted sigma points as columns
   MatrixXd PredSigPts = MatrixXd(5, 15);
 
-  VectorXd x_pred_mean = VectorXd(n_x_);
-  MatrixXd P_pred = MatrixXd(5, 5);
-
   VectorXd z_pred_meas_mean_ra = VectorXd(3);
 
   VectorXd z_pred_meas_mean_li = VectorXd(2);
@@ -132,10 +139,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
   MatrixXd Zsig_pts_radar = MatrixXd(3, 15);
 
   MatrixXd Zsig_pts_lidar = MatrixXd(2, 15);
-
-  MatrixXd S = MatrixXd(3, 3);
-
-  MatrixXd S_Li = MatrixXd(2, 2);
 
   AugmentedSigmaPoints(&AugSigPts);
 
@@ -147,28 +150,26 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
   {
     PredictRadarMeasurement(&PredSigPts, 
                             &z_pred_meas_mean_ra, 
-                            &S, &Zsig_pts_radar);
+                            &S_Ra_, &Zsig_pts_radar);
     UpdateRadar(meas_package, 
                 &PredSigPts, 
                 &x_pred_mean, 
                 &P_pred, 
                 &Zsig_pts_radar, 
-                &z_pred_meas_mean_ra, 
-                &S);
+                &z_pred_meas_mean_ra);
   }
   else if (meas_package.sensor_type_ == MeasurementPackage::LASER)
   {
     PredictLidarMeasurement(&PredSigPts,
                             &z_pred_meas_mean_li,
-                            &S_Li,
+                            &S_Li_,
                             &Zsig_pts_lidar);
     UpdateLidar(meas_package,
                 &PredSigPts,
                 &x_pred_mean,
                 &P_pred,
                 &Zsig_pts_lidar,
-                &z_pred_meas_mean_li,
-                &S_Li);
+                &z_pred_meas_mean_li);
   }
   else
   {
@@ -184,8 +185,7 @@ void UKF::UpdateLidar( MeasurementPackage meas_package,
                     VectorXd *x_pred,                 
                     MatrixXd *P_pred,                  
                     MatrixXd *Zsig,                    
-                    VectorXd *z_pred,                  
-                    MatrixXd *S)  
+                    VectorXd *z_pred)  
 {
   //create matrix for cross correlation Tc
   MatrixXd Tc = MatrixXd(n_x_, L_n_z_);
@@ -204,14 +204,14 @@ void UKF::UpdateLidar( MeasurementPackage meas_package,
   }
 
   //Kalman gain K;
-  MatrixXd K = Tc * S->inverse();
+  MatrixXd K = Tc * S_Li_.inverse();
 
   // //residual
   VectorXd z_diff = meas_package.raw_measurements_ - *z_pred;
 
   // //update state mean and covariance matrix
   x_ = *x_pred + K * z_diff;
-  P_ = *P_pred - K*(*S)*K.transpose();
+  P_ = *P_pred - K* S_Li_ *K.transpose();
 }
 
 /**
@@ -223,8 +223,7 @@ void UKF::UpdateRadar( MeasurementPackage meas_package,
                     VectorXd *x_pred,                 
                     MatrixXd *P_pred,                  
                     MatrixXd *Zsig,                    
-                    VectorXd *z_pred,                  
-                    MatrixXd *S) 
+                    VectorXd *z_pred) 
 {
   //create matrix for cross correlation Tc
   MatrixXd Tc = MatrixXd(n_x_, n_z_);
@@ -248,7 +247,7 @@ void UKF::UpdateRadar( MeasurementPackage meas_package,
   }
 
   //Kalman gain K;
-  MatrixXd K = Tc * S->inverse();
+  MatrixXd K = Tc * S_Ra_.inverse();
 
   //residual
   VectorXd z_diff = meas_package.raw_measurements_ - *z_pred;
@@ -259,7 +258,7 @@ void UKF::UpdateRadar( MeasurementPackage meas_package,
   //update state mean and covariance matrix
   x_ = *x_pred + K * z_diff;
   // x_ = K * z_diff;
-  P_ = *P_pred - K*(*S)*K.transpose();
+  P_ = *P_pred - K* S_Ra_ *K.transpose();
 }
 
 void UKF::AugmentedSigmaPoints(MatrixXd* Xsig_out) 

@@ -88,6 +88,11 @@ public:
   ///* Radar measurement noise covariance matrix
   MatrixXd R_Ra_;
 
+  ///* Radar covariance matrix
+  MatrixXd S_Ra_;
+  ///* Lidar covariance matrix
+  MatrixXd S_Li_;
+
   /**
    * Constructor
    */
@@ -115,8 +120,7 @@ private:
                     VectorXd *x_pred,                 
                     MatrixXd *P_pred,                  
                     MatrixXd *Zsig,                    
-                    VectorXd *z_pred,                  
-                    MatrixXd *S) ;
+                    VectorXd *z_pred) ;
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
@@ -127,8 +131,7 @@ private:
                     VectorXd *x_pred,                  // predicted mean
                     MatrixXd *P_pred,                  // predicted covariance
                     MatrixXd *Zsig,                    // predicted measurement sigma points
-                    VectorXd *z_pred,                  // predicted measurement mean
-                    MatrixXd *S);                      // predicted measurement covariance
+                    VectorXd *z_pred);                  // predicted measurement mean
 
   /**
    * Generate augmented sigma points
@@ -183,7 +186,11 @@ private:
                      VectorXd *weights, 
                      MatrixXd *Zsig);
 
-  void NormalizeAngle(VectorXd *vector, int index);
+  /**
+   * Normalize an angle 
+   */
+  void NormalizeAngle(VectorXd *vector, 
+                      int index);
 };
 
 #endif /* UKF_H */
