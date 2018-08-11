@@ -76,6 +76,9 @@ public:
   ///* Radar measurement state dimension
   int n_z_;
 
+  ///* Lidar measurement state dimension
+  int L_n_z_;
+
   ///* Sigma point spreading parameter
   double lambda_;
 
@@ -106,7 +109,13 @@ public:
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateLidar(MeasurementPackage meas_package);
+  void UpdateLidar( MeasurementPackage meas_package,
+                    MatrixXd *Xsig_pred,               
+                    VectorXd *x_pred,                 
+                    MatrixXd *P_pred,                  
+                    MatrixXd *Zsig,                    
+                    VectorXd *z_pred,                  
+                    MatrixXd *S) ;
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
@@ -153,10 +162,19 @@ private:
                                 MatrixXd *Zsig_pts);
 
   /**
+   * predict lidar measurement
+   * 
+  */
+  void PredictLidarMeasurement(MatrixXd *Xsig_in,
+                                    VectorXd *z_out,
+                                    MatrixXd *S_out,
+                                    MatrixXd *Zsig_pts);
+
+      /**
    * set weights
    * @param weights
    */
-  void GenerateWeight(VectorXd *weights);
+      void GenerateWeight(VectorXd *weights);
 };
 
 #endif /* UKF_H */
