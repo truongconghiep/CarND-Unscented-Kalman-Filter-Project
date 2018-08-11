@@ -82,12 +82,6 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
-  ///* Lidar measurement noise covariance matrix
-  // MatrixXd R_Li_;
-
-  // ///* Radar measurement noise covariance matrix
-  // MatrixXd R_Ra_;
-
   /**
    * Constructor
    */
@@ -103,13 +97,6 @@ public:
    * @param meas_package The latest measurement data of either radar or laser
    */
   void ProcessMeasurement(MeasurementPackage meas_package);
-
-  /**
-   * Prediction Predicts sigma points, the state, and the state covariance
-   * matrix
-   * @param delta_t Time between k and k+1 in s
-   */
-  void Prediction(double delta_t);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
@@ -162,16 +149,11 @@ private:
    * predict radar measurement
    * 
   */
-  // void PredictRadarMeasurement( MatrixXd* Xsig_in, 
-  //                               VectorXd* z_out, 
-  //                               MatrixXd* S_out, 
-  //                               MatrixXd *Zsig_pts,
-  //                               MatrixXd *R);
-
   void PredictRadarMeasurement( MatrixXd* Xsig_in, 
                                 VectorXd* z_out, 
                                 MatrixXd* S_out, 
-                                MatrixXd *Zsig_pts);
+                                MatrixXd *Zsig_pts,
+                                MatrixXd *R);
 
   /**
    * predict lidar measurement
@@ -180,7 +162,8 @@ private:
   void PredictLidarMeasurement(MatrixXd *Xsig_in,
                                     VectorXd *z_out,
                                     MatrixXd *S_out,
-                                    MatrixXd *Zsig_pts);
+                                    MatrixXd *Zsig_pts,
+                                    MatrixXd *R);
 
   /**
    * set weights
