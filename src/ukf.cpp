@@ -15,9 +15,9 @@ UKF::UKF()
 {
   //* State dimension
   n_x_ = 5;
-
+  //* Radar measurement dimension
   n_z_ = 3;
-
+  //* Lidar measurement dimension
   L_n_z_ = 2;
 
   //* Augmented state dimension
@@ -25,23 +25,18 @@ UKF::UKF()
 
   //* Sigma point spreading parameter
   lambda_ = 3 - n_aug_;
-  // if this is false, laser measurements will be ignored (except during init)
-  use_laser_ = true;
-
-  // if this is false, radar measurements will be ignored (except during init)
-  use_radar_ = true;
 
   // initial state vector
-  x_ = VectorXd(5);
+  x_ = VectorXd(n_x_);
 
   // initial covariance matrix
   P_ = MatrixXd(n_x_, n_x_);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 10;
+  std_a_ = 1.0;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 15;
+  std_yawdd_ = 0.35;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -59,6 +54,14 @@ UKF::UKF()
   // Radar measurement noise standard deviation radius change in m/s
   std_radrd_ = 0.3;
   //DO NOT MODIFY measurement noise values above these are provided by the sensor manufacturer.
+
+  // if this is false, laser measurements will be ignored (except during init)
+  use_laser_ = true;
+
+  // if this is false, radar measurements will be ignored (except during init)
+  use_radar_ = true;
+
+  is_initialized_ = false;
 }
 
 UKF::~UKF() {}
@@ -79,16 +82,34 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
     // initialize mean
     x_ << 0.31224,
           0.58033,
-          4.89281,
-          0.55433,
-          0.353577;
+          1,
+          1,
+          0.1;
 
     // initialize covariance matrix
-    P_ << 0.0054342,  -0.002405,  0.0034157, -0.0034819, -0.00299378,
-          -0.002405,    0.01084,   0.001492,  0.0098018,  0.00791091,
-          0.0034157,   0.001492,  0.0058012, 0.00077863, 0.000792973,
-          -0.0034819,  0.0098018, 0.00077863,   0.011923,   0.0112491,
-          -0.0029937,  0.0079109, 0.00079297,   0.011249,   0.0126972;
+    P_ << 0.15, 0, 0, 0, 0,
+        0, 0.15, 0, 0, 0,
+        0, 0, 1, 0, 0,
+        0, 0, 0, 1, 0,
+        0, 0, 0, 0, 1;
+
+    if (meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_)
+    {
+
+      x_(0) = meas_package.raw_measurements_(0);
+      x_(1) = meas_package.raw_measurements_(1);
+    }
+    else if (meas_package.sensor_type_ == MeasurementPackage::RADAR && use_radar_)
+    {
+      /**
+        Convert radar from polar to cartesian coordinates and initialize state.
+        */
+      float ro = meas_package.raw_measurements_(0);
+      float phi = meas_package.raw_measurements_(1);
+      x_(0) = ro * cos(phi);
+      x_(1) = ro * sin(phi);
+    }
+
     return;
   }
 
