@@ -70,6 +70,17 @@ UKF::UKF()
 
   weights_ = VectorXd(2 * n_aug_ + 1);
   GenerateWeight(&weights_);
+
+  ///* Lidar measurement noise covariance matrix
+  R_Li_ = MatrixXd(L_n_z_, L_n_z_);
+  R_Li_ << std_laspx_ * std_laspx_, 0,
+           0,                       std_laspy_ * std_laspy_;
+
+  ///* Radar measurement noise covariance matrix
+  R_Ra_ = MatrixXd(n_z_, n_z_);
+  R_Ra_ << std_radr_ * std_radr_, 0,                          0,
+           0,                     std_radphi_ * std_radphi_,  0,
+           0,                     0,                          std_radrd_ * std_radrd_;
 }
 
 UKF::~UKF() {}
@@ -93,9 +104,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
     }
     else if ((meas_package.sensor_type_ == MeasurementPackage::RADAR) && use_radar_)
     {
-      /**
-        Convert radar from polar to cartesian coordinates and initialize state.
-        */
       float ro = meas_package.raw_measurements_(0);
       float phi = meas_package.raw_measurements_(1);
       float rho_dot = meas_package.raw_measurements_(2); // velocity of rh
@@ -106,17 +114,6 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
 
     return;
   }
-
-  ///* Lidar measurement noise covariance matrix
-  MatrixXd R_Li_ = MatrixXd(L_n_z_, L_n_z_);
-  R_Li_ << std_laspx_ * std_laspx_, 0,
-      0, std_laspy_ * std_laspy_;
-
-  ///* Radar measurement noise covariance matrix
-  MatrixXd R_Ra_ = MatrixXd(n_z_, n_z_);
-  R_Ra_ << std_radr_ * std_radr_, 0, 0,
-      0, std_radphi_ * std_radphi_, 0,
-      0, 0, std_radrd_ * std_radrd_;
 
   delta_t = (meas_package.timestamp_ - last_timestamp) / 1000000.0;
   last_timestamp = meas_package.timestamp_;
@@ -150,8 +147,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
   {
     PredictRadarMeasurement(&PredSigPts, 
                             &z_pred_meas_mean_ra, 
-                            &S, &Zsig_pts_radar, 
-                            &R_Ra_);
+                            &S, &Zsig_pts_radar);
     UpdateRadar(meas_package, 
                 &PredSigPts, 
                 &x_pred_mean, 
@@ -165,8 +161,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package)
     PredictLidarMeasurement(&PredSigPts,
                             &z_pred_meas_mean_li,
                             &S_Li,
-                            &Zsig_pts_lidar,
-                            &R_Li_);
+                            &Zsig_pts_lidar);
     UpdateLidar(meas_package,
                 &PredSigPts,
                 &x_pred_mean,
@@ -387,8 +382,7 @@ void UKF::PredictMeanAndCovariance(MatrixXd* Xsig_in, VectorXd *x_pred_mean, Mat
 void UKF::PredictLidarMeasurement(MatrixXd* Xsig_in, 
                                   VectorXd* z_out, 
                                   MatrixXd* S_out, 
-                                  MatrixXd *Zsig_pts,
-                                  MatrixXd *R) 
+                                  MatrixXd *Zsig_pts) 
 {
   //create matrix for sigma points in measurement space
   MatrixXd Zsig = MatrixXd(L_n_z_, 2 * n_aug_ + 1);
@@ -419,7 +413,7 @@ void UKF::PredictLidarMeasurement(MatrixXd* Xsig_in,
   }
 
   //add measurement noise covariance matrix
-  S = S + *R;
+  S = S + R_Li_;
 
   //write result
   *z_out = z_pred;
@@ -430,8 +424,7 @@ void UKF::PredictLidarMeasurement(MatrixXd* Xsig_in,
 void UKF::PredictRadarMeasurement(MatrixXd* Xsig_in, 
                                   VectorXd* z_out, 
                                   MatrixXd* S_out, 
-                                  MatrixXd *Zsig_pts,
-                                  MatrixXd *R)
+                                  MatrixXd *Zsig_pts)
 {
   //create matrix for sigma points in measurement space
   MatrixXd Zsig = MatrixXd(n_z_, 2 * n_aug_ + 1);
@@ -472,7 +465,7 @@ void UKF::PredictRadarMeasurement(MatrixXd* Xsig_in,
   }
 
   //add measurement noise covariance matrix
-  S = S + *R;
+  S = S + R_Ra_;
 
   //write result
   *z_out = z_pred;

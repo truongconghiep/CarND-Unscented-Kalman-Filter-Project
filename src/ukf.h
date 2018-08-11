@@ -82,6 +82,12 @@ public:
   ///* Sigma point spreading parameter
   double lambda_;
 
+  ///* Lidar measurement noise covariance matrix
+  MatrixXd R_Li_;
+
+  ///* Radar measurement noise covariance matrix
+  MatrixXd R_Ra_;
+
   /**
    * Constructor
    */
@@ -97,6 +103,8 @@ public:
    * @param meas_package The latest measurement data of either radar or laser
    */
   void ProcessMeasurement(MeasurementPackage meas_package);
+
+private:
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
@@ -121,8 +129,6 @@ public:
                     MatrixXd *Zsig,                    // predicted measurement sigma points
                     VectorXd *z_pred,                  // predicted measurement mean
                     MatrixXd *S);                      // predicted measurement covariance
-
-private:
 
   /**
    * Generate augmented sigma points
@@ -152,8 +158,7 @@ private:
   void PredictRadarMeasurement( MatrixXd* Xsig_in, 
                                 VectorXd* z_out, 
                                 MatrixXd* S_out, 
-                                MatrixXd *Zsig_pts,
-                                MatrixXd *R);
+                                MatrixXd *Zsig_pts);
 
   /**
    * predict lidar measurement
@@ -162,8 +167,7 @@ private:
   void PredictLidarMeasurement(MatrixXd *Xsig_in,
                                     VectorXd *z_out,
                                     MatrixXd *S_out,
-                                    MatrixXd *Zsig_pts,
-                                    MatrixXd *R);
+                                    MatrixXd *Zsig_pts);
 
   /**
    * set weights
